@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import Optional
 
 __app_name__ = "MeetVoice"
-__version__ = "0.2.0"
-__version_info__ = (0, 2, 0)
+__version__ = "0.1.1"
+__version_info__ = (0, 1, 1)
 __github_repo__ = "hxzhang2000/MeetVoice"
 __github_url__ = "https://github.com/hxzhang2000/MeetVoice"
 __homepage__ = __github_url__
