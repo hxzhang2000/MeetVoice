@@ -57,8 +57,10 @@ vllm_model     = "microsoft/VibeVoice-ASR"
 
 [llm]
 enabled       = true
-base_url      = "https://api.openai.com/v1"   # OpenAI 兼容端点
-api_key       = "sk-..."                       # 亦可用环境变量 ${MEETVOICE_LLM_API_KEY}
+provider      = "openai"                      # openai | ollama
+base_url      = "https://api.openai.com/v1"   # OpenAI 兼容端点（provider=ollama 时忽略，自动用 ollama_host/v1）
+api_key       = "sk-..."                       # ollama 可留空；亦可用环境变量 ${MEETVOICE_LLM_API_KEY}
+ollama_host   = "http://localhost:11434"       # provider=ollama 时的本地服务地址
 model         = "gpt-4o-mini"
 temperature   = 0.2
 max_tokens    = 2048

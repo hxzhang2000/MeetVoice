@@ -64,6 +64,9 @@ def config(path):
     click.echo(f"asr.model_path = {cfg.asr.model_path}")
     click.echo(f"asr.device     = {cfg.asr.device}")
     click.echo(f"llm.enabled    = {cfg.llm.enabled}")
+    click.echo(f"llm.provider   = {cfg.llm.provider}")
+    if cfg.llm.provider == "ollama":
+        click.echo(f"llm.ollama_host = {cfg.llm.ollama_host}")
     click.echo(f"models.active  = {cfg.models.active}")
 
 
@@ -98,6 +101,76 @@ def models(path):
         flag = "●" if st["active"] else " "
         dl = "已下载" if st["downloaded"] else "未下载"
         click.echo(f"[{flag}] {st['id']:<24} {st['backend']:<16} {dl}  {st['name']}")
+
+
+@cli.group()
+def llm():
+    """LLM / Ollama 本地大模型相关命令。"""
+
+
+@llm.command("check")
+@click.option("--path", default=None, help="config.toml 路径")
+def llm_check(path):
+    """检查 LLM 配置与 Ollama 服务状态。"""
+    cfg = _load_config(path)
+    click.echo(f"provider  = {cfg.llm.provider}")
+    click.echo(f"model     = {cfg.llm.model}")
+    if cfg.llm.provider == "ollama":
+        click.echo(f"ollama_host = {cfg.llm.ollama_host}")
+        click.echo(f"endpoint    = {cfg.llm.resolved_base_url()}")
+        from .llm.ollama import is_ollama_running, list_ollama_models
+
+        running = is_ollama_running(cfg.llm.ollama_host)
+        click.echo(f"ollama 运行 = {'是' if running else '否'}")
+        if running:
+            models = list_ollama_models(cfg.llm.ollama_host)
+            click.echo(f"本地模型   = {', '.join(models) if models else '（无）'}")
+            ready = cfg.llm.model in models
+            click.echo(
+                f"当前模型就绪 = {'是' if ready else f'否（可 `meetvoice llm pull {cfg.llm.model}`）'}"
+            )
+    else:
+        click.echo(f"base_url = {cfg.llm.base_url}")
+
+
+@llm.command("list")
+@click.option("--path", default=None, help="config.toml 路径")
+def llm_list(path):
+    """列出 Ollama 本地已拉取的模型。"""
+    cfg = _load_config(path)
+    if cfg.llm.provider != "ollama":
+        click.echo("provider 非 ollama，无需列出本地模型；可用 `meetvoice config` 查看端点。")
+        return
+    from .llm.ollama import is_ollama_running, list_ollama_models
+
+    if not is_ollama_running(cfg.llm.ollama_host):
+        click.echo(f"Ollama 未运行（{cfg.llm.ollama_host}）。", err=True)
+        raise SystemExit(1)
+    for m in list_ollama_models(cfg.llm.ollama_host):
+        click.echo(m)
+
+
+@llm.command("pull")
+@click.argument("model")
+@click.option("--path", default=None, help="config.toml 路径")
+def llm_pull(model, path):
+    """从 Ollama 拉取指定模型（如 `meetvoice llm pull qwen2.5:7b`）。"""
+    cfg = _load_config(path)
+    from .llm.ollama import is_ollama_running, pull_ollama_model
+
+    if cfg.llm.provider != "ollama":
+        click.echo("provider 非 ollama，跳过拉取。", err=True)
+        raise SystemExit(1)
+    if not is_ollama_running(cfg.llm.ollama_host):
+        click.echo(f"Ollama 未运行（{cfg.llm.ollama_host}），无法拉取。", err=True)
+        raise SystemExit(1)
+    click.echo(f"正在从 Ollama 拉取 {model} …")
+    try:
+        pull_ollama_model(cfg.llm.ollama_host, model)
+        click.echo(f"已拉取 {model}。请将其填入 [llm].model 后使用。")
+    except Exception as e:
+        click.echo(f"拉取失败：{e}", err=True)
+        raise SystemExit(1)
 
 
 @cli.command()

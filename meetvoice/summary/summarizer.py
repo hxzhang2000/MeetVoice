@@ -10,7 +10,6 @@
 
 from __future__ import annotations
 
-import os
 from typing import List, Optional
 
 from ..config import Config
@@ -47,10 +46,10 @@ class MeetingSummarizer:
     @property
     def client(self):
         if self._client is None and not self._client_loaded:
-            from openai import OpenAI  # 懒加载（可选依赖）
+            # 按 provider（openai / ollama）构造 OpenAI 兼容客户端；未安装 openai 时抛 ImportError
+            from ..llm import build_llm_client
 
-            key = self.cfg.api_key or os.getenv("MEETVOICE_LLM_API_KEY", "")
-            self._client = OpenAI(base_url=self.cfg.base_url, api_key=key)
+            self._client = build_llm_client(self.cfg)
             self._client_loaded = True
         return self._client
 

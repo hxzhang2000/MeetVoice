@@ -74,13 +74,31 @@ if BaseModel is not object:
 
     class LLMConfig(BaseModel):
         enabled: bool = True
+        provider: str = "openai"        # openai | ollama
         base_url: str = "https://api.openai.com/v1"
         api_key: str = ""
+        ollama_host: str = "http://localhost:11434"  # provider=ollama 时的本地服务地址
         model: str = "gpt-4o-mini"
         temperature: float = 0.2
         max_tokens: int = 2048
         timeout: int = 60
         prompt_template: str = ""
+
+        def resolved_base_url(self) -> str:
+            """返回实际使用的 OpenAI 兼容端点。
+
+            provider=ollama 时由 ollama_host 推导为 ``http://host:port/v1``，
+            忽略 base_url，实现本地大模型零配置接入。
+            """
+            if self.provider == "ollama":
+                return self.ollama_host.rstrip("/") + "/v1"
+            return self.base_url
+
+        def resolved_api_key(self) -> str:
+            """Ollama 不校验密钥，留空时回退占位值（OpenAI SDK 要求 api_key 非空）。"""
+            if self.provider == "ollama":
+                return self.api_key or "ollama"
+            return self.api_key
 
     class UIConfig(BaseModel):
         autostart: bool = False
@@ -158,6 +176,8 @@ if BaseModel is not object:
                 "MEETVOICE_LLM_API_KEY": ("llm", "api_key"),
                 "MEETVOICE_LLM_BASE_URL": ("llm", "base_url"),
                 "MEETVOICE_LLM_MODEL": ("llm", "model"),
+                "MEETVOICE_LLM_PROVIDER": ("llm", "provider"),
+                "MEETVOICE_LLM_OLLAMA_HOST": ("llm", "ollama_host"),
                 "MEETVOICE_ASR_BACKEND": ("asr", "backend"),
                 "MEETVOICE_ASR_DEVICE": ("asr", "device"),
             }

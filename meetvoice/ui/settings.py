@@ -32,8 +32,10 @@ def build_override_sections(cfg: Config) -> dict:
         },
         "llm": {
             "enabled": cfg.llm.enabled,
+            "provider": cfg.llm.provider,
             "base_url": cfg.llm.base_url,
             "api_key": cfg.llm.api_key,
+            "ollama_host": cfg.llm.ollama_host,
             "model": cfg.llm.model,
             "temperature": cfg.llm.temperature,
             "max_tokens": cfg.llm.max_tokens,
@@ -66,6 +68,7 @@ def open_settings_window(cfg: Config, config_path: Optional[str] = None) -> None
     from PySide6.QtWidgets import (
         QApplication,
         QCheckBox,
+        QComboBox,
         QFormLayout,
         QLineEdit,
         QPushButton,
@@ -85,23 +88,42 @@ def open_settings_window(cfg: Config, config_path: Optional[str] = None) -> None
     ed["loopback_device"] = QLineEdit(cfg.capture.loopback_device or "")
     ed["silence_sec"] = QLineEdit(str(cfg.capture.silence_sec))
     ed["llm_enabled"] = QCheckBox(); ed["llm_enabled"].setChecked(cfg.llm.enabled)
+    ed["llm_provider"] = QComboBox()
+    ed["llm_provider"].addItems(["openai", "ollama"])
+    ed["llm_provider"].setCurrentText(cfg.llm.provider)
     ed["llm_base_url"] = QLineEdit(cfg.llm.base_url)
     ed["llm_api_key"] = QLineEdit(cfg.llm.api_key)
+    ed["llm_ollama_host"] = QLineEdit(cfg.llm.ollama_host)
     ed["llm_model"] = QLineEdit(cfg.llm.model)
     ed["ui_autostart"] = QCheckBox(); ed["ui_autostart"].setChecked(cfg.ui.autostart)
     ed["meetings_recycle"] = QCheckBox(); ed["meetings_recycle"].setChecked(cfg.meetings.recycle)
     ed["models_auto_enable"] = QCheckBox(); ed["models_auto_enable"].setChecked(cfg.models.auto_enable)
 
+    def _sync_provider_visibility():
+        is_ollama = ed["llm_provider"].currentText() == "ollama"
+        # Ollama：端点由 ollama_host 推导，隐藏 base_url/api_key
+        ed["llm_ollama_host"].setVisible(is_ollama)
+        form.labelForField(ed["llm_ollama_host"]).setVisible(is_ollama)
+        ed["llm_base_url"].setVisible(not is_ollama)
+        form.labelForField(ed["llm_base_url"]).setVisible(not is_ollama)
+        ed["llm_api_key"].setVisible(not is_ollama)
+        form.labelForField(ed["llm_api_key"]).setVisible(not is_ollama)
+
+    ed["llm_provider"].currentTextChanged.connect(_sync_provider_visibility)
+
     form.addRow("麦克风设备", ed["mic_device"])
     form.addRow("系统声回环设备", ed["loopback_device"])
     form.addRow("静音切分阈值(秒)", ed["silence_sec"])
     form.addRow("启用会议总结(LLM)", ed["llm_enabled"])
+    form.addRow("LLM 接入方式", ed["llm_provider"])
+    form.addRow("Ollama 服务地址", ed["llm_ollama_host"])
     form.addRow("LLM Base URL", ed["llm_base_url"])
     form.addRow("LLM API Key", ed["llm_api_key"])
     form.addRow("LLM 模型", ed["llm_model"])
     form.addRow("开机自启", ed["ui_autostart"])
     form.addRow("删除走回收站", ed["meetings_recycle"])
     form.addRow("模型自动启用", ed["models_auto_enable"])
+    _sync_provider_visibility()
     layout.addLayout(form)
 
     btn_save = QPushButton("保存并提示重启")
@@ -115,9 +137,16 @@ def open_settings_window(cfg: Config, config_path: Optional[str] = None) -> None
         except ValueError:
             pass
         cfg.llm.enabled = ed["llm_enabled"].isChecked()
-        cfg.llm.base_url = ed["llm_base_url"].text()
-        cfg.llm.api_key = ed["llm_api_key"].text()
+        cfg.llm.provider = ed["llm_provider"].currentText()
         cfg.llm.model = ed["llm_model"].text()
+        cfg.llm.ollama_host = ed["llm_ollama_host"].text()
+        if cfg.llm.provider == "ollama":
+            # 端点由 ollama_host 推导，api_key 用占位（Ollama 不校验）
+            cfg.llm.base_url = cfg.llm.resolved_base_url()
+            cfg.llm.api_key = "ollama"
+        else:
+            cfg.llm.base_url = ed["llm_base_url"].text()
+            cfg.llm.api_key = ed["llm_api_key"].text()
         cfg.ui.autostart = ed["ui_autostart"].isChecked()
         cfg.meetings.recycle = ed["meetings_recycle"].isChecked()
         cfg.models.auto_enable = ed["models_auto_enable"].isChecked()
