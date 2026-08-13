@@ -1,0 +1,35 @@
+# 运行时产物（见 §4.5.2 / §6.6）
+models/
+recordings/
+notes/
+logs/
+trash/
+
+# 第三方源码
+third_party/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# 虚拟环境
+.venv/
+venv/
+
+# 用户配置（含密钥）不应入库
+config.toml
+
+# 工具
+.omo/
+*.log
+.DS_Store
+
+# 测试缓存
+.pytest_cache/
+
+# 工作助手本地数据（非源码，含项目记忆/状态）
+.workbuddy/

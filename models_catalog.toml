@@ -1,0 +1,95 @@
+# 可下载模型目录（随包发布，可编辑）
+# 每个模型定义：id / name / backend / model_path(HF id 或本地路径) /
+# target_dir(严格对应 §4.5.2 目录) / source(hf|modelscope|cli) /
+# download(下载参数) / size_gb / languages / recommended / notes
+#
+# target_dir 与 config.model_root 组合得到最终落点：
+#   最终路径 = <model_root>/<target_dir>/<模型文件>
+
+[[models]]
+id            = "vibevoice-7b"
+name          = "VibeVoice-ASR-7B"
+backend       = "vibevoice_local"
+model_path    = "microsoft/VibeVoice-ASR"
+target_dir    = "vibevoice"
+source        = "hf"
+size_gb       = 15
+languages     = ["zh", "en"]
+recommended   = true
+notes         = "默认 GPU 主引擎；联合 ASR+diarization+时间戳，60min 单 pass"
+
+[[models]]
+id            = "moss-0.9b"
+name          = "MOSS-Transcribe-Diarize 0.9B"
+backend       = "moss_local"
+model_path    = "OpenMOSS-Team/MOSS-Transcribe-Diarize"
+target_dir    = "moss"
+source        = "hf"
+trust_remote_code = true
+size_gb       = 2
+languages     = ["zh", "en"]
+recommended   = false
+notes         = "0.9B 全开源；低显存友好；AISHELL-4 CER 14.84 优于 VibeVoice"
+
+[[models]]
+id            = "funasr-paraformer-large"
+name          = "FunASR Paraformer-large"
+backend       = "funasr_local"
+model_path    = "iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch"
+target_dir    = "funasr"
+source        = "modelscope"
+size_gb       = 0.3
+languages     = ["zh"]
+recommended   = true
+notes         = "CPU 中文兜底；原生 diarization（2026-05 起，无需 CAM++）"
+
+[[models]]
+id            = "funasr-sensevoice-small"
+name          = "FunASR SenseVoice-Small"
+backend       = "funasr_local"
+model_path    = "iic/SenseVoiceSmall"
+target_dir    = "funasr"
+source        = "modelscope"
+size_gb       = 0.3
+languages     = ["zh", "en", "ja", "ko", "yue"]
+recommended   = false
+notes         = "精度/速度权衡备选；多语言"
+
+[[models]]
+id            = "vibeasr-cpp"
+name          = "VibeASR.cpp（量化 GGUF，仅英文）"
+backend       = "vibeasr_cpp"
+model_path    = ""               # 手动下载，填入本地 GGUF 路径
+target_dir    = "vibeasr"
+source        = "cli"
+download_cmd  = "请手动下载 VibeASR.cpp 权重（vae/lm GGUF）放入 models/vibeasr/"
+size_gb       = 2
+languages     = ["en"]
+recommended   = false
+notes         = "仅英文场景；需手动放置，无法一键下载"
+
+# 以下扩展后端为后续里程碑（M12 / M14）实现适配器后启用；
+# 此处先预留条目，target_dir 与 §4.5.2 目录一致。
+[[models]]
+id            = "fireredasr-2s"
+name          = "FireRedASR2S（SOTA，硬件门槛高）"
+backend       = "fireredasr_local"
+model_path    = "FireRedTeam/FireRedASR-2S"
+target_dir    = "fireredasr"
+source        = "hf"
+size_gb       = 17
+languages     = ["zh"]
+recommended   = false
+notes         = "普通话 CER 2.89 SOTA，但 8.3B / 32GB+ 显存，v1 不实用"
+
+[[models]]
+id            = "qwen3-asr"
+name          = "Qwen3-ASR（多语言/效率）"
+backend       = "qwen3asr_local"
+model_path    = "Qwen/Qwen3-ASR"
+target_dir    = "qwen3asr"
+source        = "hf"
+size_gb       = 4
+languages     = ["multilingual"]
+recommended   = false
+notes         = "52 语言；diarization 能力待确认"

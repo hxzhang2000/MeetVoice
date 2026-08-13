@@ -1,0 +1,78 @@
+# MeetVoice 配置示例（复制为 config.toml 后修改）
+# 优先级：环境变量 > 运行时设置 > 本文件。改动需重启项见 §6.6 热更新边界。
+
+[paths]
+notes_dir      = "notes"          # 会议纪要（live.md / final.md / summary.md）
+recording_dir  = "recordings"     # 录音归档（wav_sys / wav_mic）
+recordings_dir = "recordings"     # 会议记录 JSON 单一事实源（与 recording_dir 默认同目录）
+logs_dir       = "logs"
+
+[window]
+window_sec = 45                    # 滚动窗口大小（最大上限）
+
+[capture]
+sample_rate         = 48000        # 采集采样率（浮点）
+target_sample_rate  = 24000        # 送 ASR 的目标采样率（librosa 重采样）
+channels            = 1
+silence_sec         = 0.6          # 滚动窗口静音切分阈值
+mic_device          = ""           # 留空=默认输入设备
+loopback_device     = ""           # 留空=自动探测 WASAPI 回环设备
+
+[asr]
+# —— 通用 ——
+backend        = "vibevoice_local"   # vibevoice_local | moss_local | funasr_local | vibeasr_cpp | vibeasr_vllm | fireredasr_local | qwen3asr_local
+model_path     = "microsoft/VibeVoice-ASR"  # HF id 或本地绝对/相对路径
+device         = "auto"              # auto | cuda | cuda:0 | cpu | mps
+model_root     = "models"            # 本地权重根目录（§4.5.2）
+hotwords       = ["张三", "李四", "VibeVoice"]  # 热词（人名/术语）
+hf_cache_dir   = ""                  # 留空用默认 ~/.cache/huggingface
+ms_cache_dir   = ""                  # 留空用默认 ~/.cache/modelscope
+
+# —— 仅 vibevoice_local 生效 ——
+compute_dtype  = "bf16"              # bf16 | fp16 | fp32（无 GPU 时用 fp32）
+attn_impl      = "flash_attention_2" # flash_attention_2 | sdpa | eager
+device_map     = "auto"              # auto 自动分片；或 "cuda:0"
+max_new_tokens = 32768
+
+# —— 仅 funasr_local 生效 ——
+funasr_model   = "paraformer-large"
+funasr_vad     = "fsmn-vad"
+funasr_punc    = "ct-punc"
+funasr_spk     = "auto"              # 2026-05 起 FunASR 原生 diarization，无需 cam++
+
+# —— 仅 moss_local 生效 ——
+moss_trust_remote_code = true
+moss_max_audio_min   = 90
+
+# —— 仅 vibeasr_cpp 生效 ——
+asr_cpp_bin    = "models/vibeasr/asr_infer.exe"
+asr_cpp_vae    = "models/vibeasr/vibeasr-vae-encoder-i8_s.gguf"
+asr_cpp_lm     = "models/vibeasr/vibeasr-lm-i2_s-embed-q6_k.gguf"
+asr_cpp_threads= 6
+
+# —— 仅 vibeasr_vllm 生效 ——
+vllm_base_url  = "http://localhost:8000/v1"
+vllm_api_key   = ""
+vllm_model     = "microsoft/VibeVoice-ASR"
+
+[llm]
+enabled       = true
+base_url      = "https://api.openai.com/v1"   # OpenAI 兼容端点
+api_key       = "sk-..."                       # 亦可用环境变量 ${MEETVOICE_LLM_API_KEY}
+model         = "gpt-4o-mini"
+temperature   = 0.2
+max_tokens    = 2048
+timeout       = 60
+prompt_template = ""                          # 留空用内置模板，支持 {transcript}
+
+[ui]
+autostart     = false
+minimize_to_tray_on_close = true
+
+[meetings]
+recycle       = true    # 删除会议时先移入 trash/ 回收站（误删可恢复），false 则直接物理删除
+trash_dir     = "trash"
+
+[models]                      # 模型管理（§6.6 模型管理 UI）
+active        = ""           # 当前启用的模型 id（来自 models_catalog.toml）；空 = 未选择
+auto_enable   = true         # 仅下载一个模型时自动启用

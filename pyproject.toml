@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "meetvoice"
+version = "0.1.0"
+description = "实时会议记录系统：双路音频采集 + 实时转写 + 会议总结 + 会议/模型管理"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+dependencies = [
+    "pydantic>=2.5",
+    "tomli>=2.0; python_version < '3.11'",
+    "numpy>=1.24",
+    "sounddevice>=0.4.6",        # 音频采集（WASAPI loopback + 麦克风）
+    "librosa>=0.10",             # 重采样（48k -> 24k）
+    "pydub>=0.25",               # 音频合并/导出辅助
+    "openai>=1.30",              # 会议总结（OpenAI 兼容）
+    "huggingface-hub>=0.23",     # 模型下载（hf_hub_download）
+    "modelscope>=1.15",          # 模型下载（snapshot_download）
+    "pystray>=0.19",             # 托盘图标
+    "pywin32>=306; sys_platform == 'win32'",  # WASAPI 回环 / 自启动注册表
+    "PySide6>=6.7",              # 控制窗口 / 设置页
+    "filelock>=3.13",            # 单实例锁
+    "loguru>=0.7",               # 日志
+    "click>=8.1",                # CLI
+    # GPU 后端（默认主引擎 / 候选）按需安装：
+    # transformers>=4.40, torch>=2.2, funasr>=1.0, vllm>=0.5
+]
+
+[project.optional-dependencies]
+# 完整运行所需（含 GPU 后端）；按机器显存选择安装 torch/funasr/vllm
+full = [
+    "torch>=2.2",
+    "transformers>=4.40",
+    "funasr>=1.0",
+    "vllm>=0.5",
+]
+# 轻量开发（仅纯逻辑/单测，不装 ML/UI 重型依赖）
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+]
+
+[project.scripts]
+meetvoice = "meetvoice.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["meetvoice*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-q"
