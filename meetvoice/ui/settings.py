@@ -13,7 +13,9 @@ from typing import Optional
 
 from .._log import log
 from .._tomlutil import dump_toml
+from .. import __app_name__, __github_url__, __version__
 from ..config import Config
+from .about import open_about_window
 
 
 def user_config_path(base_dir: str | Path) -> Path:
@@ -70,6 +72,7 @@ def open_settings_window(cfg: Config, config_path: Optional[str] = None) -> None
         QCheckBox,
         QComboBox,
         QFormLayout,
+        QLabel,
         QLineEdit,
         QPushButton,
         QVBoxLayout,
@@ -128,6 +131,19 @@ def open_settings_window(cfg: Config, config_path: Optional[str] = None) -> None
 
     btn_save = QPushButton("保存并提示重启")
     layout.addWidget(btn_save)
+
+    # 底部：版本号 + GitHub 链接 + 关于
+    footer = QLabel(
+        f"{__app_name__} v{__version__} · "
+        f'<a href="{__github_url__}">GitHub</a> · '
+        f'<a href="{__github_url__}/stargazers">⭐ Star</a>'
+    )
+    footer.setOpenExternalLinks(True)
+    layout.addWidget(footer)
+
+    btn_about = QPushButton("关于 / ⭐ Star")
+    btn_about.clicked.connect(lambda: open_about_window())
+    layout.addWidget(btn_about)
 
     def on_save():
         cfg.capture.mic_device = ed["mic_device"].text() or None

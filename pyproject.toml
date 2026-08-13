@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "meetvoice"
-version = "0.1.0"
+version = "0.2.0"
 description = "实时会议记录系统：双路音频采集 + 实时转写 + 会议总结 + 会议/模型管理"
 readme = "README.md"
 requires-python = ">=3.11"

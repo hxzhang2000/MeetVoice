@@ -2,7 +2,9 @@
 
 实时会议记录系统：双路音频采集（系统声音 WASAPI 回环 + 本机麦克风），实时转写为文字并保存为本地 Markdown；会议结束后可调用 OpenAI 兼容大模型生成结构化会议总结，并提供会议管理与模型管理。
 
-详见 [docs/开发方案.md](docs/开发方案.md)（当前 v1.13）。
+详见 [docs/开发方案.md](docs/开发方案.md)（当前 v1.15）。
+
+如果 MeetVoice 对你有帮助，欢迎在 GitHub 上给我们一个 ⭐ [Star](https://github.com/hxzhang2000/MeetVoice)！
 
 ## 快速开始
 

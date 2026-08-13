@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Optional
 
 from .._log import log
+from .. import __github_url__, __version__
 from ..config import Config
 from ..orchestrator import LiveSession, SessionState
 
@@ -35,11 +36,13 @@ class TrayApp:
             Menu.SEPARATOR,
             MenuItem("📋 会议记录…", self.show_meetings),
             MenuItem("⚙ 设置 / 模型", self.show_settings),
+            MenuItem("★ 关于 MeetVoice", self.show_about),
+            MenuItem("⭐ 在 GitHub 上 Star", self.open_github_star),
             Menu.SEPARATOR,
             MenuItem("退出", self.on_quit),
         )
         self.icon = pystray.Icon(
-            "MeetVoice", img, "MeetVoice 会议记录", menu
+            "MeetVoice", img, f"MeetVoice v{__version__}", menu
         )
 
     # ---- 状态广播（单一状态源）-------------------------------------- #
@@ -51,7 +54,7 @@ class TrayApp:
                 img = icons.icon_image(state)
                 if img is not None:
                     self.icon.icon = img
-                self.icon.title = f"MeetVoice · {state}"
+                self.icon.title = f"MeetVoice v{__version__} · {state}"
             except Exception as e:
                 log.debug("更新托盘图标失败：{}", e)
 
@@ -84,6 +87,16 @@ class TrayApp:
         from .settings import open_settings_window
 
         open_settings_window(self.cfg, self.config_path)
+
+    def show_about(self, icon=None, item=None):
+        from .about import open_about_window
+
+        open_about_window()
+
+    def open_github_star(self, icon=None, item=None):
+        import webbrowser
+
+        webbrowser.open(__github_url__)
 
     def _notify(self, title: str, message: str) -> None:
         try:

@@ -20,7 +20,14 @@ from typing import Optional
 
 import click
 
-from . import __version__
+from . import (
+    __app_name__,
+    __description__,
+    __github_url__,
+    __version__,
+    about_text,
+    changelog_path,
+)
 from ._log import log
 from .config import Config
 
@@ -51,10 +58,27 @@ def version():
 
 
 @cli.command()
+def about():
+    """显示版本与 GitHub 仓库信息，并推荐 Star。"""
+    click.echo(about_text())
+
+
+@cli.command()
+def changelog():
+    """打印 CHANGELOG.md（若存在）。"""
+    p = changelog_path()
+    if p is None:
+        click.echo("未找到 CHANGELOG.md（开发仓库根目录）。", err=True)
+        raise SystemExit(1)
+    click.echo(p.read_text(encoding="utf-8"))
+
+
+@cli.command()
 @click.option("--path", default=None, help="config.toml 路径（默认 ./config.toml）")
 def config(path):
     """解析并打印当前配置。"""
     cfg = _load_config(path)
+    click.echo(f"version        = {__version__}")
     click.echo(f"notes_dir      = {cfg.notes_dir}")
     click.echo(f"recording_dir  = {cfg.recording_dir}")
     click.echo(f"recordings_dir = {cfg.recordings_dir}")
