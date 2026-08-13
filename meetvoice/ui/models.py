@@ -98,5 +98,3 @@ def open_models_window(cfg: Config, manager: Optional[ModelManager] = None) -> N
 
     refresh()
     w.show()
-    if not QApplication.instance():
-        app.exec()

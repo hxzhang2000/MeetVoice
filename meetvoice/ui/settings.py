@@ -171,6 +171,6 @@ def open_settings_window(cfg: Config, config_path: Optional[str] = None) -> None
         log.info("设置已保存到 {}（backend/device 等需重启生效）", path)
 
     btn_save.clicked.connect(on_save)
+    # 当前进程已由 run_app 启动单一 Qt 事件循环（主线程），
+    # 非模态窗口直接 show() 即可，事件由主循环统一分发。
     w.show()
-    if not QApplication.instance():
-        app.exec()

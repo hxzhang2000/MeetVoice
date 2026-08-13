@@ -55,6 +55,6 @@ def open_about_window(parent: Optional[object] = None) -> None:
     btn_ok.clicked.connect(dlg.accept)
     layout.addWidget(btn_ok)
 
+    # 当前进程已由 run_app 启动单一 Qt 事件循环（主线程），
+    # 此处仅以模态方式运行对话框，关闭后把控制权交还事件循环。
     dlg.exec()
-    if not QApplication.instance():
-        app.exec()

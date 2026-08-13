@@ -14,9 +14,12 @@ from ..orchestrator import LiveSession, SessionState
 
 
 class TrayApp:
-    def __init__(self, cfg: Config, config_path: Optional[str] = None):
+    def __init__(self, cfg: Config, config_path: Optional[str] = None, bridge=None):
         self.cfg = cfg
         self.config_path = config_path
+        # bridge：跨线程信号桥（GuiBridge），把菜单动作派发回 Qt 主线程。
+        # 无 bridge 时（测试/独立调用）直接本地打开，作为降级。
+        self.bridge = bridge
         # 单一状态源：LiveSession 通过 on_state_change 广播状态
         self.session = LiveSession(cfg, on_state_change=self._on_state_change)
         self.icon = None
@@ -79,19 +82,28 @@ class TrayApp:
         self._notify("会议已生成纪要", "可于「会议记录」查看 final.md / summary.md")
 
     def show_meetings(self, icon=None, item=None):
-        from .meetings import open_meetings_window
+        if self.bridge is not None:
+            self.bridge.sig_meetings.emit()
+        else:
+            from .meetings import open_meetings_window
 
-        open_meetings_window(self.cfg)
+            open_meetings_window(self.cfg)
 
     def show_settings(self, icon=None, item=None):
-        from .settings import open_settings_window
+        if self.bridge is not None:
+            self.bridge.sig_settings.emit()
+        else:
+            from .settings import open_settings_window
 
-        open_settings_window(self.cfg, self.config_path)
+            open_settings_window(self.cfg, self.config_path)
 
     def show_about(self, icon=None, item=None):
-        from .about import open_about_window
+        if self.bridge is not None:
+            self.bridge.sig_about.emit()
+        else:
+            from .about import open_about_window
 
-        open_about_window()
+            open_about_window()
 
     def open_github_star(self, icon=None, item=None):
         import webbrowser
@@ -106,6 +118,19 @@ class TrayApp:
             pass
 
     def on_quit(self, icon=None, item=None):
+        # 通过 bridge 派发到 Qt 主线程统一退出（停止托盘 + 退出 Qt 循环）。
+        if self.bridge is not None:
+            self.bridge.sig_quit.emit()
+            return
+        try:
+            self.session.stop_and_finalize()
+        except Exception:
+            pass
+        if self.icon is not None:
+            self.icon.stop()
+
+    def request_stop(self) -> None:
+        """由 Qt 主线程调用：停止录制会话并退出托盘事件循环。"""
         try:
             self.session.stop_and_finalize()
         except Exception:

@@ -103,8 +103,6 @@ def open_meetings_window(cfg: Config, parent=None) -> None:
 
     refresh()
     w.show()
-    if not QApplication.instance():
-        app.exec()
 
 
 def _open_file(path: str) -> None:
